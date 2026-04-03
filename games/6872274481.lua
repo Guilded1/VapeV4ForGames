@@ -1,4 +1,5 @@
 --This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.
+--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.
 local run = function(func)
 	func()
 end
@@ -1773,13 +1774,61 @@ end)
 run(function()
 	local FastBreak
 	local Time
-	
+	local BedCheck
+	local Blacklist
+	local blocks
+
+	local string_lower = string.lower
+	local string_find = string.find
+
+	-- check if block is a bed
+	local function isBed(block)
+		if not block then return false end
+		return string_find(string_lower(block.Name), "bed", 1, true) ~= nil
+	end
+
+	-- check if block is blacklisted
+	local function isBlacklisted(block)
+		if not block or not blocks then return false end
+		local name = string_lower(block.Name)
+
+		for _, v in pairs(blocks.ListEnabled) do
+			if string_find(name, string_lower(v), 1, true) then
+				return true
+			end
+		end
+
+		return false
+	end
+
 	FastBreak = vape.Categories.Blatant:CreateModule({
 		Name = 'FastBreak',
 		Function = function(callback)
 			if callback then
 				repeat
-					bedwars.BlockBreakController.blockBreaker:setCooldown(Time.Value)
+					local block = nil
+
+					-- get block you're looking at
+					pcall(function()
+						local info = bedwars.BlockBreaker.clientManager:getBlockSelector():getMouseInfo(1)
+						if info and info.target and info.target.blockInstance then
+							block = info.target.blockInstance
+						end
+					end)
+
+					-- decide cooldown
+					local cooldown = Time.Value
+
+					if BedCheck.Enabled and isBed(block) then
+						cooldown = 0.3
+					end
+
+					if Blacklist.Enabled and isBlacklisted(block) then
+						cooldown = 0.3
+					end
+
+					bedwars.BlockBreakController.blockBreaker:setCooldown(cooldown)
+
 					task.wait(0.1)
 				until not FastBreak.Enabled
 			else
@@ -1788,6 +1837,7 @@ run(function()
 		end,
 		Tooltip = 'Decreases block hit cooldown'
 	})
+
 	Time = FastBreak:CreateSlider({
 		Name = 'Break speed',
 		Min = 0,
@@ -1795,6 +1845,27 @@ run(function()
 		Default = 0.25,
 		Decimal = 100,
 		Suffix = 'seconds'
+	})
+
+	BedCheck = FastBreak:CreateToggle({
+		Name = 'Bed Check',
+		Default = false
+	})
+
+	Blacklist = FastBreak:CreateToggle({
+		Name = 'Blacklist Blocks',
+		Default = false,
+		Function = function(v)
+			if blocks then
+				blocks.Object.Visible = v
+			end
+		end
+	})
+
+	blocks = FastBreak:CreateTextList({
+		Name = 'Blacklisted Blocks',
+		Placeholder = 'bed',
+		Visible = false
 	})
 end)
 	
@@ -2234,20 +2305,22 @@ run(function()
 										AnimDelay = tick()
 									end
 
-									AttackRemote:FireServer({
-										weapon = sword.tool,
-										chargedAttack = {chargeRatio = 0},
-										lastSwingServerTimeDelta = 0.5,
-										entityInstance = v.Character,
-										validate = {
-											raycast = {
-												cameraPosition = {value = pos},
-												cursorDirection = {value = dir}
-											},
-											targetPosition = {value = actualRoot.Position},
-											selfPosition = {value = pos}
-										}
-									})
+									if v.Humanoid.FloorMaterial ~= Enum.Material.Air or math.random(1, 100) < AirChance.Value then
+	AttackRemote:FireServer({
+		weapon = sword.tool,
+		chargedAttack = {chargeRatio = 0},
+		lastSwingServerTimeDelta = 0.5,
+		entityInstance = v.Character,
+		validate = {
+			raycast = {
+				cameraPosition = {value = pos},
+				cursorDirection = {value = dir}
+			},
+			targetPosition = {value = actualRoot.Position},
+			selfPosition = {value = pos}
+		}
+	})
+end
 								end
 							end
 						end
@@ -2334,6 +2407,13 @@ run(function()
 		Max = 0.5,
 		Default = 0.42,
 		Decimal = 100
+	})
+        AirChance = Killaura:CreateSlider({
+		Name = 'Air Hit Chance',
+		Min = 0,
+		Max = 100,
+		Default = 100,
+		Suffix = '%'
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
@@ -8491,4 +8571,3 @@ run(function()
 		List = WinEffectName
 	})
 end)
-	
