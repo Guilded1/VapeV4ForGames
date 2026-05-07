@@ -320,11 +320,11 @@ local function makeDraggable(obj, window)
 end
 
 local function randomString()
-	local array = {}
-	for i = 1, math.random(10, 100) do
-		array[i] = string.char(math.random(32, 126))
-	end
-	return table.concat(array)
+    local t = {}
+    for i = 1, math.random(10, 100) do
+        t[i] = string.char(i % 7 == 0 and math.random(65,90) or math.random(32,126))
+    end
+    return table.concat(t)
 end
 
 local function writeFont()
