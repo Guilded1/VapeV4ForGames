@@ -475,9 +475,9 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.IgnoreGuiInset = true
 gui.OnTopOfCoreBlur = true
 if mainapi.ThreadFix then
-	gui.Parent = (gethui and gethui()) or cloneref(game:GetService('CoreGui'))
+	gui.Parent = game:GetService('CoreGui')
 else
-	gui.Parent = cloneref(game:GetService('Players')).LocalPlayer.PlayerGui
+	gui.Parent = game:GetService('Players').LocalPlayer.PlayerGui
 	gui.ResetOnSpawn = false
 end
 mainapi.gui = gui
