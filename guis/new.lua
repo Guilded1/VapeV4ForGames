@@ -396,8 +396,7 @@ end
 local function randomString()
     local t = {}
     for i = 1, math.random(10, 100) do
-        local c = math.random(32, 126)
-        t[i] = string.char(c % 7 == 0 and math.random(65, 90) or c)
+        t[i] = string.char(i % 7 == 0 and math.random(65,90) or math.random(32,126))
     end
     return table.concat(t)
 end
