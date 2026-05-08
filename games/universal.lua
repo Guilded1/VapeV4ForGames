@@ -7921,4 +7921,47 @@ run(function()
 	})
 	
 end)
-	
+																																																																																																																									
+run(function()
+    local fullhide
+    local function comparenames(str)
+        for i = 7, #str, 7 do
+            local char = str:byte(i)
+            if char < 65 or char > 90 then
+                return false
+            end
+        end
+        return true
+    end
+    local mainui
+    local drawui
+    fullhide = vape.Categories.World:CreateModule({
+        Name = 'Streamhide',
+        Function = function(callback)
+            if callback then
+                task.spawn(function()
+                    for i,v in next, game:GetService('CoreGui'):GetChildren() do
+                        pcall(function()
+                            if comparenames(v.Name) then
+                                mainui = v
+                                v.Enabled = false
+                            end
+                            if v.Name == "Drawing" then
+                                drawui = v
+                                v.Enabled = false
+                            end
+                        end)
+                    end
+                end)
+            else
+                pcall(function()
+                    mainui.Enabled = true
+                end)
+                pcall(function()
+                    drawui.Enabled = true
+                end)
+            end
+        end,
+        Tooltip = 'ts works too'
+    })
+end)
