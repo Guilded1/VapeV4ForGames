@@ -8570,39 +8570,3 @@ run(function()
 		List = WinEffectName
 	})
 end)
-
-run(function()
-	local fullhide
-    local function comparenames(str)
-        for i = 7, #str, 7 do
-            local char = str:byte(i)
-            if char < 65 or char > 90 then
-                return false
-            end
-        end
-        return true
-    end
-    local mainui
-	fullhide = vape.Categories.World:CreateModule({
-		Name = 'Streamhide',
-		Function = function(callback)
-			if callback then
-				task.spawn(function()
-                    for i,v in next, game:GetService('CoreGui'):GetChildren() do
-                        pcall(function()
-                            if comparenames(v.Name) then
-                                mainui = v
-                                v.Enabled = false
-                            end
-                        end)
-                    end
-                end)
-			else
-                if mainui then
-                    mainui.Enabled = true
-                end
-			end
-		end,
-		Tooltip = 'please work'
-	})
-end)
