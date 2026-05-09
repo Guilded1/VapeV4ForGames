@@ -8962,3 +8962,95 @@ run(function()
 		Default = true
 	})
 end)
+
+run(function()
+
+	local TaxRemover
+	local oldDispatch
+	local oldtax
+	local oldadded
+	local olditems
+	local oldhook
+	local oldConnect
+	TaxRemover = vape.Categories.Blatant:CreateModule({
+		Name = "TaxRemover",
+		Function = function(callback)
+			if callback then
+				oldtax = bedwars.ShopTaxController.isTaxed
+				oldadded = bedwars.ShopTaxController.getAddedTax
+				olditems = bedwars.ShopTaxController.getTaxedItems
+				oldDispatch = bedwars.Store.dispatch
+				task.spawn(function()
+					bedwars.Store.dispatch = function(...)
+						local arg = select(2, ...)
+						if arg and typeof(arg) == 'table' and arg.type == 'IncrementTaxState'  then
+							return false
+						end 	
+						return oldDispatch(...)
+					end
+				end)
+				task.spawn(function()
+					bedwars.ShopTaxController.isTaxed = function(...)
+						return 0
+					end
+				end)
+				task.spawn(function()
+					bedwars.ShopTaxController.getTaxedItems = function(...)
+						return {}
+					end
+				end)
+				task.spawn(function()
+					bedwars.ShopTaxController.getAddedTax = function(...)
+						return 0
+					end
+				end)
+
+				task.spawn(function()
+					if bedwars.ShopTaxController.taxStateUpdateEvent then
+						oldConnect = bedwars.ShopTaxController.taxStateUpdateEvent.Connect
+						bedwars.ShopTaxController.taxStateUpdateEvent.Connect = function() 
+							return {Disconnect = function() end}
+						end
+					end
+				end)
+				task.spawn(function()
+					repeat
+						store.inventory.taxCheckUpdate = tick()
+						if typeof(bedwars.ShopTaxController.hasTax) == "number" then
+							bedwars.ShopTaxController.hasTax = 0
+						elseif typeof(bedwars.ShopTaxController.hasTax) == "boolean" then
+							bedwars.ShopTaxController.hasTax = false
+						else
+							vape:CreateNotification('TaxRemover',`Tax Remover error the type of hasTax is {typeof(bedwars.ShopTaxController.hasTax)} report to aero or soryed`,16,'alert')
+							break
+						end
+						if typeof(bedwars.ShopTaxController.taxedItems) == "table" then
+							bedwars.ShopTaxController.taxedItems = {}
+						else
+							vape:CreateNotification('TaxRemover',`Tax Remover error the type of taxedItems is NOT a TABLE PLEASE report to aero or soryed ASAP`,16,'alert')
+							break
+						end
+						if typeof(bedwars.ShopTaxController.addedTaxMap) == "table" then
+							bedwars.ShopTaxController.addedTaxMap = {}
+						else
+							vape:CreateNotification('TaxRemover',`Tax Remover error the type of addedTaxMap is NOT a TABLE PLEASE report to aero or soryed ASAP`,16,'alert')
+							break
+						end
+						task.wait()
+					until not TaxRemover.Enabled
+				end)
+			else
+				bedwars.Store.dispatch = oldDispatch
+				bedwars.ShopTaxController.isTaxed = oldtax
+				bedwars.ShopTaxController.getAddedTax = oldadded
+				bedwars.ShopTaxController.getTaxedItems = olditems
+				bedwars.ShopTaxController.taxStateUpdateEvent.Connect = oldConnect
+				oldDispatch = nil
+				oldtax = nil
+				oldadded = nil
+				olditems = nil
+				oldConnect = nil
+			end
+		end
+	})
+end)
