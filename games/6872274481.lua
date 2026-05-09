@@ -8900,3 +8900,65 @@ run(function()
 			end
 		end
 	end
+	
+	LootESP = vape.Categories.Render:CreateModule({
+		Name = 'LootESP',
+		Function = function(callback)
+			if callback then
+				findExistingLoot()
+				
+				LootESP:Clean(CollectionService:GetInstanceAddedSignal('ItemDrop'):Connect(function(drop)
+					if not LootESP.Enabled then return end
+					
+					task.defer(function()
+						local handle = drop:FindFirstChild('Handle')
+						if not handle then return end
+						
+						local lootType, config = getLootType(drop.Name)
+						if lootType and isLootEnabled(lootType) then
+							Added(handle, lootType, config)
+						end
+					end)
+				end))
+				
+				LootESP:Clean(CollectionService:GetInstanceRemovedSignal('ItemDrop'):Connect(function(drop)
+					local handle = drop:FindFirstChild('Handle')
+					if handle then
+						Removed(handle)
+					end
+				end))
+				
+			else
+				for handle, billboard in pairs(Reference) do
+					billboard:Destroy()
+				end
+				table.clear(Reference)
+			end
+		end,
+		Tooltip = 'ESP for loot drops (iron, diamond, emerald)'
+	})
+	
+	IronToggle = LootESP:CreateToggle({
+		Name = 'Iron',
+		Function = function(callback)
+			refreshLootType('iron')
+		end,
+		Default = true
+	})
+	
+	DiamondToggle = LootESP:CreateToggle({
+		Name = 'Diamond',
+		Function = function(callback)
+			refreshLootType('diamond')
+		end,
+		Default = true
+	})
+	
+	EmeraldToggle = LootESP:CreateToggle({
+		Name = 'Emerald',
+		Function = function(callback)
+			refreshLootType('emerald')
+		end,
+		Default = true
+	})
+end)
