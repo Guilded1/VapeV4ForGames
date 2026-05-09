@@ -9121,7 +9121,7 @@ run(function()
 		return count
 	end
 	
-	RemoveNeon = vape.Categories.BoostFPS:CreateModule({
+	RemoveNeon = vape.Categories.Render:CreateModule({
 		Name = 'RemoveNeon',
 		Function = function(callback)
 			if callback then
