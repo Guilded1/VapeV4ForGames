@@ -9393,7 +9393,7 @@ un(function()
 		return count
 	end
 	
-	RemoveNeon = vape.Categories.Render:CreateModule({
+	RemoveNeon = vape.Categories.Utility:CreateModule({
 		Name = 'RemoveNeon',
 		Function = function(callback)
 			if callback then
@@ -9454,7 +9454,7 @@ run(function()
 		end
 	end
 	
-	ShadowRemover = vape.Categories.Render:CreateModule({
+	ShadowRemover = vape.Categories.Utility:CreateModule({
 		Name = 'ShadowRemover',
 		Function = function(callback)
 			if callback then
