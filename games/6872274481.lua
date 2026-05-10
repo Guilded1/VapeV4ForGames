@@ -1,5 +1,5 @@
 --This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.
---Vape rewrite fixed by relevant, the features added are skidded by stranger
+--Vape rewrite fixed by relevant, the features added are skidded by stranger mostly from aerov4
 local run = function(func)
 	func()
 end
