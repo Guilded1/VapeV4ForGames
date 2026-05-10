@@ -31,7 +31,6 @@ end
 local gameCamera = workspace.CurrentCamera
 local lplr = playersService.LocalPlayer
 local assetfunction = getcustomasset
-
 local vape = shared.vape
 local entitylib = vape.Libraries.entity
 local targetinfo = vape.Libraries.targetinfo
@@ -9452,7 +9451,7 @@ run(function()
 	local lockedRandomPart = nil
 	local wasHovering = false
 	local PAFOVCircle
-	local ProjectileAimbot
+	local ProjectileAimbot1
 	local paFOVCircleDrawing = nil
 	local AutoCharge
 	local paFOVCircleConnection = nil
