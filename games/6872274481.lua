@@ -2944,54 +2944,118 @@ run(function()
 	local TargetPart
 	local Targets
 	local FOV
+	local Range
 	local OtherProjectiles
+	local Blacklist
+	local SortMethod
+	local AeroPAChargePercent
+	local RandomHeadPercent
+	local RandomTorsoPercent
+	local CustomPrediction
+	local HorizontalMultiplier
+	local VerticalMultiplier
+	local AutoCharge
+
 	local rayCheck = RaycastParams.new()
 	rayCheck.FilterType = Enum.RaycastFilterType.Include
 	rayCheck.FilterDescendantsInstances = {workspace:FindFirstChild('Map')}
+
 	local old
-	
+
+	local function isBlacklisted(projectileName)
+		if not OtherProjectiles.Enabled then
+			return not projectileName:find('arrow')
+		end
+
+		for _, black in ipairs(Blacklist.ListEnabled) do
+			if projectileName:find(black) then
+				return true
+			end
+		end
+
+		return false
+	end
+
 	local ProjectileAimbot = vape.Categories.Blatant:CreateModule({
 		Name = 'ProjectileAimbot',
 		Function = function(callback)
 			if callback then
 				old = bedwars.ProjectileController.calculateImportantLaunchValues
+
 				bedwars.ProjectileController.calculateImportantLaunchValues = function(...)
 					local self, projmeta, worldmeta, origin, shootpos = ...
+
+					local originPos = entitylib.isAlive and (shootpos or entitylib.character.RootPart.Position) or Vector3.zero
+
 					local plr = entitylib.EntityMouse({
 						Part = 'RootPart',
 						Range = FOV.Value,
 						Players = Targets.Players.Enabled,
 						NPCs = Targets.NPCs.Enabled,
 						Wallcheck = Targets.Walls.Enabled,
-						Origin = entitylib.isAlive and (shootpos or entitylib.character.RootPart.Position) or Vector3.zero
+						Origin = originPos
 					})
-	
+
 					if plr then
 						local pos = shootpos or self:getLaunchPosition(origin)
 						if not pos then
 							return old(...)
 						end
-	
-						if (not OtherProjectiles.Enabled) and not projmeta.projectile:find('arrow') then
+
+						local projectileName = projmeta.projectile or ''
+						if isBlacklisted(projectileName) then
 							return old(...)
 						end
-	
+
+						local targetPart = nil
+
+						if TargetPart.Value == 'RootPart' then
+							targetPart = plr.RootPart
+						elseif TargetPart.Value == 'Head' then
+							targetPart = plr.Head or plr.RootPart
+						elseif TargetPart.Value == 'Randomize' then
+							if math.random(1, 100) <= RandomHeadPercent.Value then
+								targetPart = plr.Head or plr.RootPart
+							else
+								targetPart = plr.RootPart
+							end
+						else
+							targetPart = plr.RootPart
+						end
+
+						if not targetPart then
+							return old(...)
+						end
+
+						if (targetPart.Position - originPos).Magnitude > Range.Value then
+							return old(...)
+						end
+
 						local meta = projmeta:getProjectileMeta()
 						local lifetime = (worldmeta and meta.predictionLifetimeSec or meta.lifetimeSec or 3)
 						local gravity = (meta.gravitationalAcceleration or 196.2) * projmeta.gravityMultiplier
 						local projSpeed = (meta.launchVelocity or 100)
-						local offsetpos = pos + (projmeta.projectile == 'owl_projectile' and Vector3.zero or projmeta.fromPositionOffset)
+
+						local offsetpos = pos + (
+							projmeta.projectile == 'owl_projectile'
+							and Vector3.zero
+							or projmeta.fromPositionOffset
+						)
+
 						local balloons = plr.Character:GetAttribute('InflatedBalloons')
 						local playerGravity = workspace.Gravity
-	
+
 						if balloons and balloons > 0 then
-							playerGravity = (workspace.Gravity * (1 - ((balloons >= 4 and 1.2 or balloons >= 3 and 1 or 0.975))))
+							playerGravity = (
+								workspace.Gravity *
+								(1 - ((balloons >= 4 and 1.2 or balloons >= 3 and 1 or 0.975)))
+							)
 						end
-	
+
 						if plr.Character.PrimaryPart:FindFirstChild('rbxassetid://8200754399') then
 							playerGravity = 6
 						end
-	
+
 						if plr.Player:GetAttribute('IsOwlTarget') then
 							for _, owl in collectionService:GetTagged('Owl') do
 								if owl:GetAttribute('Target') == plr.Player.UserId and owl:GetAttribute('Status') == 2 then
@@ -2999,21 +3063,66 @@ run(function()
 								end
 							end
 						end
-	
-						local newlook = CFrame.new(offsetpos, plr[TargetPart.Value].Position) * CFrame.new(projmeta.projectile == 'owl_projectile' and Vector3.zero or Vector3.new(bedwars.BowConstantsTable.RelX, bedwars.BowConstantsTable.RelY, bedwars.BowConstantsTable.RelZ))
-						local calc = prediction.SolveTrajectory(newlook.p, projSpeed, gravity, plr[TargetPart.Value].Position, projmeta.projectile == 'telepearl' and Vector3.zero or plr[TargetPart.Value].Velocity, playerGravity, plr.HipHeight, plr.Jumping and 42.6 or nil, rayCheck)
+
+						local newlook = CFrame.new(offsetpos, targetPart.Position) *
+							CFrame.new(
+								projmeta.projectile == 'owl_projectile'
+								and Vector3.zero
+								or Vector3.new(
+									bedwars.BowConstantsTable.RelX,
+									bedwars.BowConstantsTable.RelY,
+									bedwars.BowConstantsTable.RelZ
+								)
+							)
+
+						local targetVelocity = targetPart.Velocity
+
+						if CustomPrediction.Enabled then
+							local hMult = HorizontalMultiplier.Value / 100
+							local vMult = VerticalMultiplier.Value / 100
+
+							targetVelocity = Vector3.new(
+								targetVelocity.X * hMult,
+								targetVelocity.Y * vMult,
+								targetVelocity.Z * hMult
+							)
+						end
+
+						local calc = prediction.SolveTrajectory(
+							newlook.p,
+							projSpeed,
+							gravity,
+							targetPart.Position,
+							projmeta.projectile == 'telepearl' and Vector3.zero or targetVelocity,
+							playerGravity,
+							plr.HipHeight,
+							plr.Jumping and 42.6 or nil,
+							rayCheck
+						)
+
 						if calc then
 							targetinfo.Targets[plr] = tick() + 1
+
+							local customDrawDuration = 5
+
+							if AutoCharge.Enabled then
+								if projmeta.projectile:find('arrow') then
+									customDrawDuration = 0.58 * (AeroPAChargePercent.Value / 100)
+								end
+							else
+								customDrawDuration = 0.05
+							end
+
 							return {
 								initialVelocity = CFrame.new(newlook.Position, calc).LookVector * projSpeed,
 								positionFrom = offsetpos,
 								deltaT = lifetime,
 								gravitationalAcceleration = gravity,
-								drawDurationSeconds = 5
+								drawDurationSeconds = customDrawDuration
 							}
 						end
 					end
-	
+
 					return old(...)
 				end
 			else
@@ -3022,23 +3131,93 @@ run(function()
 		end,
 		Tooltip = 'Silently adjusts your aim towards the enemy'
 	})
+
 	Targets = ProjectileAimbot:CreateTargets({
 		Players = true,
 		Walls = true
 	})
+
 	TargetPart = ProjectileAimbot:CreateDropdown({
 		Name = 'Part',
-		List = {'RootPart', 'Head'}
+		List = {'RootPart', 'Head', 'Randomize'},
+		Default = 'RootPart'
 	})
+
+	SortMethod = ProjectileAimbot:CreateDropdown({
+		Name = 'Sort Method',
+		List = {'Distance', 'Health', 'Cursor'},
+		Default = 'Distance'
+	})
+
+	Range = ProjectileAimbot:CreateSlider({
+		Name = 'Range',
+		Min = 10,
+		Max = 500,
+		Default = 100
+	})
+
 	FOV = ProjectileAimbot:CreateSlider({
 		Name = 'FOV',
 		Min = 1,
 		Max = 1000,
 		Default = 1000
 	})
+
+	RandomHeadPercent = ProjectileAimbot:CreateSlider({
+		Name = 'Head Chance',
+		Min = 0,
+		Max = 100,
+		Default = 50
+	})
+
+	RandomTorsoPercent = ProjectileAimbot:CreateSlider({
+		Name = 'Torso Chance',
+		Min = 0,
+		Max = 100,
+		Default = 50
+	})
+
+	CustomPrediction = ProjectileAimbot:CreateToggle({
+		Name = 'Custom Prediction',
+		Default = false
+	})
+
+	HorizontalMultiplier = ProjectileAimbot:CreateSlider({
+		Name = 'Horizontal Multiplier',
+		Min = 0,
+		Max = 200,
+		Default = 100,
+		Suffix = '%'
+	})
+
+	VerticalMultiplier = ProjectileAimbot:CreateSlider({
+		Name = 'Vertical Multiplier',
+		Min = 0,
+		Max = 200,
+		Default = 100,
+		Suffix = '%'
+	})
+
 	OtherProjectiles = ProjectileAimbot:CreateToggle({
 		Name = 'Other Projectiles',
 		Default = true
+	})
+
+	Blacklist = ProjectileAimbot:CreateTextList({
+		Name = 'Blacklist',
+		Default = {'telepearl'}
+	})
+
+	AutoCharge = ProjectileAimbot:CreateToggle({
+		Name = 'AutoCharge',
+		Default = true
+	})
+
+	AeroPAChargePercent = ProjectileAimbot:CreateSlider({
+		Name = 'Charge Percent',
+		Min = 1,
+		Max = 100,
+		Default = 100
 	})
 end)
 	
