@@ -9649,7 +9649,7 @@ run(function()
 	end
 
 	ProjectileAimbot = vape.Categories.Blatant:CreateModule({
-		Name = 'ProjectileAimbot',
+		Name = 'ProjectileAimbot1',
 		Function = function(callback)
 			if callback then
 					if PAFOVCircle then
@@ -9838,13 +9838,13 @@ run(function()
 		Tooltip = 'Silently adjusts your aim towards the enemy'
 	})
 
-	Targets = ProjectileAimbot:CreateTargets({
+	Targets = ProjectileAimbot1:CreateTargets({
 		Players = true,
 		NPCs = true,
 		Walls = true
 	})
 
-	TargetPart = ProjectileAimbot:CreateDropdown({
+	TargetPart = ProjectileAimbot1:CreateDropdown({
 		Name = 'Part',
 		List = {'Dynamic', 'RootPart', 'Head', 'Closest', 'Randomize'},
 		Default = 'RootPart',
@@ -9855,21 +9855,21 @@ run(function()
 		end
 	})
 
-	SortMethod = ProjectileAimbot:CreateDropdown({
+	SortMethod = ProjectileAimbot1:CreateDropdown({
 		Name = 'Sort Method',
 		List = {'Distance', 'Damage', 'Threat', 'Kit', 'Health', 'Angle', 'Cursor', 'Forest'},
 		Default = 'Distance',
 		Tooltip = 'Prioritize targets when multiple are in range'
 	})
 
-	DesirePAWorkMode = ProjectileAimbot:CreateDropdown({
+	DesirePAWorkMode = ProjectileAimbot1:CreateDropdown({
 		Name = 'PA Work Mode',
 		List = {'First Person', 'Third Person', 'Both'},
 		Default = 'Both',
 		Tooltip = 'Which perspective the aimbot works in'
 	})
 
-	Range = ProjectileAimbot:CreateSlider({
+	Range = ProjectileAimbot1:CreateSlider({
 		Name = 'Range',
 		Min = 10,
 		Max = 500,
@@ -9879,14 +9879,14 @@ run(function()
 
 
 
-	FOV = ProjectileAimbot:CreateSlider({
+	FOV = ProjectileAimbot1:CreateSlider({
 		Name = 'FOV',
 		Min = 1,
 		Max = 1000,
 		Default = 1000
 	})
 
-	PAFOVCircle = ProjectileAimbot:CreateToggle({
+	PAFOVCircle = ProjectileAimbot1:CreateToggle({
 		Name = 'FOV Circle',
 		Tooltip = 'Shows a circle representing your FOV on screen',
 		Function = function(call)
@@ -9894,7 +9894,7 @@ run(function()
 		end
 	})
 
-	RandomHeadPercent = ProjectileAimbot:CreateSlider({
+	RandomHeadPercent = ProjectileAimbot1:CreateSlider({
 		Name = 'Head Chance',
 		Min = 0,
 		Max = 100,
@@ -9904,7 +9904,7 @@ run(function()
 		Visible = false
 	})
 
-	RandomTorsoPercent = ProjectileAimbot:CreateSlider({
+	RandomTorsoPercent = ProjectileAimbot1:CreateSlider({
 		Name = 'Torso Chance',
 		Min = 0,
 		Max = 100,
@@ -9924,7 +9924,7 @@ run(function()
 	end
 	updateRandomizeVisibility()
 
-	DesirePAHideCursor = ProjectileAimbot:CreateToggle({
+	DesirePAHideCursor = ProjectileAimbot1:CreateToggle({
 		Name = 'Hide Cursor',
 		Default = false,
 		Tooltip = 'Hides the cursor while aiming',
@@ -9954,7 +9954,7 @@ run(function()
 		end
 	})
 
-	DesirePACursorViewMode = ProjectileAimbot:CreateDropdown({
+	DesirePACursorViewMode = ProjectileAimbot1:CreateDropdown({
 		Name = 'Cursor View Mode',
 		List = {'First Person', 'Third Person', 'Both'},
 		Default = 'First Person',
@@ -9967,7 +9967,7 @@ run(function()
 		end
 	})
 
-	DesirePACursorLimitBow = ProjectileAimbot:CreateToggle({
+	DesirePACursorLimitBow = ProjectileAimbot1:CreateToggle({
 		Name = 'Limit to Bow',
 		Darker = true,
 		Visible = false,
@@ -9979,7 +9979,7 @@ run(function()
 		end
 	})
 
-	DesirePACursorShowGUI = ProjectileAimbot:CreateToggle({
+	DesirePACursorShowGUI = ProjectileAimbot1:CreateToggle({
 		Name = 'Show on GUI',
 		Darker = true,
 		Visible = false,
@@ -9991,7 +9991,7 @@ run(function()
 		end
 	})
 
-	CustomPrediction = ProjectileAimbot:CreateToggle({
+	CustomPrediction = ProjectileAimbot1:CreateToggle({
 		Name = 'Custom Prediction',
 		Default = false,
 		Tooltip = 'Enable to customize horizontal/vertical prediction multipliers',
@@ -10005,7 +10005,7 @@ run(function()
 		end
 	})
 
-	HorizontalMultiplier = ProjectileAimbot:CreateSlider({
+	HorizontalMultiplier = ProjectileAimbot1:CreateSlider({
 		Name = 'Horizontal Multiplier',
 		Min = 0,
 		Max = 200,
@@ -10016,7 +10016,7 @@ run(function()
 		Tooltip = 'Adjust horizontal prediction strength (0% = none, 100% = normal, 200% = double)'
 	})
 
-	VerticalMultiplier = ProjectileAimbot:CreateSlider({
+	VerticalMultiplier = ProjectileAimbot1:CreateSlider({
 		Name = 'Vertical Multiplier',
 		Min = 0,
 		Max = 200,
@@ -10027,7 +10027,7 @@ run(function()
 		Tooltip = 'Adjust vertical prediction strength (0% = none, 100% = normal, 200% = double)'
 	})
 
-	OtherProjectiles = ProjectileAimbot:CreateToggle({
+	OtherProjectiles = ProjectileAimbot1:CreateToggle({
 		Name = 'Other Projectiles',
 		Default = true,
 		Function = function(call)
@@ -10035,21 +10035,21 @@ run(function()
 		end
 	})
 
-	Blacklist = ProjectileAimbot:CreateTextList({
+	Blacklist = ProjectileAimbot1:CreateTextList({
 		Name = 'Blacklist',
 		Darker = true,
 		Default = {'telepearl'},
 		Visible = OtherProjectiles.Enabled
 	})
 
-	AutoCharge = ProjectileAimbot:CreateToggle({
+	AutoCharge = ProjectileAimbot1:CreateToggle({
 		Name = "AutoCharge",
 		Default = true,
 		Function = function(v)
 			if AeroPAChargePercent and AeroPAChargePercent.Object then AeroPAChargePercent.Object.Visible = v end
 		end
 	})
-	AeroPAChargePercent = ProjectileAimbot:CreateSlider({
+	AeroPAChargePercent = ProjectileAimbot1:CreateSlider({
 		Name = 'Charge Percent',
 		Min = 1,
 		Max = 100,
