@@ -2036,10 +2036,10 @@ run(function()
 	local AnimationSpeed
 	local AnimationTween
 	local Limit
-    local AttackCheck
+    local LegitAura = {}
+	local AttackCheck
 	local kitChecks
 	local FROZEN_THRESHOLD = 10
-	local LegitAura = {}
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
