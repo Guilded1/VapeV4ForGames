@@ -2099,7 +2099,7 @@ run(function()
 	end
 
 	Killaura = vape.Categories.Blatant:CreateModule({
-		Name = 'Killaura',
+		Name = 'GrandKillaura',
 		Function = function(callback)
 			if callback then
 				if inputService.TouchEnabled then
