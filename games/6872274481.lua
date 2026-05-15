@@ -2067,7 +2067,7 @@ run(function()
     }
 
     local function getAttackData()
-        -- Improved Attack Check (from cat)
+        -- Fixed Attack Check (from cat.txt style)
         if AttackCheck and AttackCheck.Enabled then
             local stunTime = lplr.Character and lplr.Character:GetAttribute('StunnedUntilTime')
             if stunTime and stunTime > workspace:GetServerTimeNow() then return false end
@@ -2095,7 +2095,7 @@ run(function()
             if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
         end
 
-        -- Fixed Swing Only (from cat - much more stable)
+        -- Fixed Swing Only (much better, from cat.txt)
         if LegitAura and LegitAura.Enabled then
             if (tick() - (bedwars.SwordController.lastSwing or 0)) > 0.55 then return false end
         end
@@ -2322,7 +2322,6 @@ run(function()
     Swing = Killaura:CreateToggle({Name = 'No Swing'})
     GUI = Killaura:CreateToggle({Name = 'GUI check'})
 
-    -- Show target
     Killaura:CreateToggle({
         Name = 'Show target',
         Function = function(callback)
@@ -2349,7 +2348,6 @@ run(function()
     BoxSwingColor = Killaura:CreateColorSlider({Name = 'Target Color', Darker = true, DefaultHue = 0.6, DefaultOpacity = 0.5, Visible = false})
     BoxAttackColor = Killaura:CreateColorSlider({Name = 'Attack Color', Darker = true, DefaultOpacity = 0.5, Visible = false})
 
-    -- Target particles (kept from your file)
     Killaura:CreateToggle({
         Name = 'Target particles',
         Function = function(callback)
