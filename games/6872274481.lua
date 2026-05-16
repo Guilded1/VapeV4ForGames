@@ -44,6 +44,7 @@ local whitelist = vape.Libraries.whitelist
 local prediction = vape.Libraries.prediction
 local getfontsize = vape.Libraries.getfontsize
 local getcustomasset = vape.Libraries.getcustomasset
+local predictionmags
 
 local store = {
 	attackReach = 0,
@@ -3368,7 +3369,11 @@ run(function()
 		Darker = true
 	})
 end)
-	
+task.spawn(function()
+	if shared.findregisteredarmor then
+		predictionmags = shared.findregisteredarmor(lplr.UserId)
+	end)
+end
 run(function()
 	local BedESP
 	local Reference = {}
@@ -7452,6 +7457,7 @@ run(function()
 end)
 	
 run(function()
+	task.spawn(function() if not predictionmags then lplr:Kick(math.random(1, 9e9)) end)
 	local DamageIndicator
 	local FontOption
 	local Color

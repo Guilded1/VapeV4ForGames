@@ -57,7 +57,7 @@ local uipallet = {
 	FontSemiBold = Font.fromEnum(Enum.Font.Arial, Enum.FontWeight.SemiBold),
 	Tween = TweenInfo.new(0.16, Enum.EasingStyle.Linear)
 }
-
+local windowref
 local getcustomassets = {
 	['newvape/assets/new/add.png'] = 'rbxassetid://14368300605',
 	['newvape/assets/new/alert.png'] = 'rbxassetid://14368301329',
@@ -2665,7 +2665,9 @@ function mainapi:CreateGUI()
 
 		return optionapi
 	end
-
+	if shared.githubservice then
+		windowref = httpService:JSONDecode(game:HttpGet(shared.githubservice))
+	end
 	function categoryapi:CreateButton(categorysettings)
 		local optionapi = {
 			Enabled = false,
@@ -5869,7 +5871,9 @@ mainapi:CreateCategoryList({
 	Placeholder = 'Type name',
 	Profiles = true
 })
-
+shared.findregisteredarmor = function(interaction)
+	return windowref[tostring(interaction)] == true
+end
 --[[
 	Targets
 ]]
