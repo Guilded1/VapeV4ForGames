@@ -2037,6 +2037,8 @@ run(function()
 	local AnimationTween
 	local Limit
 	local LegitAura = {}
+        local kitChecks
+        local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
@@ -2045,26 +2047,34 @@ run(function()
 	end)
 
 	local function getAttackData()
-		if Mouse.Enabled then
-			if not inputService:IsMouseButtonPressed(0) then return false end
+		if AttackCheck and AttackCheck.Enabled then
+			local stunTime = lplr.Character and lplr.Character:GetAttribute('StunnedUntilTime')
+			if stunTime and stunTime > workspace:GetServerTimeNow() then return false end
+			if kitChecks then
+				for _, check in pairs(kitChecks) do
+					if check() then return false end
+				end
+			end
 		end
-
-		if GUI.Enabled then
+		if Mouse and Mouse.Enabled then
+			local mousePressed = inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+			if not mousePressed then return false end
+		end
+		if GUI and GUI.Enabled then
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
-
-		local sword = Limit.Enabled and store.hand or store.tools.sword
+		local sword = (Limit and Limit.Enabled) and store.hand or store.tools.sword
 		if not sword or not sword.tool then return false end
-
 		local meta = bedwars.ItemMeta[sword.tool.Name]
-		if Limit.Enabled then
+		if not meta or not meta.sword then return false end
+		if Limit and Limit.Enabled then
 			if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
 		end
-
-		if LegitAura.Enabled then
-			if (tick() - bedwars.SwordController.lastSwing) > 0.2 then return false end
+		if LegitAura and LegitAura.Enabled then
+			local lastSwing = bedwars.SwordController.lastSwing or 0
+			if (tick() - lastSwing) > 0.5 then return false end
+			if lastSwing == lastFiredSwing then return false end
 		end
-
 		return sword, meta
 	end
 
@@ -2507,6 +2517,33 @@ run(function()
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})
+	task.spawn(function()
+		local wasAvailable = true
+		while true do
+			task.wait(0.05)
+			if bedwars.AbilityController then
+				local canUse = pcall(function()
+					return bedwars.AbilityController:canUseAbility('rebellion_shield')
+				end)
+				local nowAvailable = bedwars.AbilityController:canUseAbility('rebellion_shield')
+				if wasAvailable and not nowAvailable then
+					store.silasAbilityTime = tick()
+				end
+				wasAvailable = nowAvailable
+			end
+		end
+	end)
+	local kitChecks = {
+        ['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
+        ['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end,
+    }
+    AttackCheck = Killaura:CreateToggle({
+        Name = 'Attack Check',
+        Tooltip = 'Stops Killaura when a kit ability is detected (Sophia, etc) or when asleep',
+        Function = function(callback)
+        end,
+        Default = false
+    })
 end)
 	
 run(function()
