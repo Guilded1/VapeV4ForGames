@@ -2037,6 +2037,8 @@ run(function()
 	local AnimationTween
 	local Limit
 	local LegitAura = {}
+    local kitChecks
+    local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
@@ -2045,26 +2047,34 @@ run(function()
 	end)
 
 	local function getAttackData()
-		if Mouse.Enabled then
-			if not inputService:IsMouseButtonPressed(0) then return false end
+		if AttackCheck and AttackCheck.Enabled then
+			local stunTime = lplr.Character and lplr.Character:GetAttribute('StunnedUntilTime')
+			if stunTime and stunTime > workspace:GetServerTimeNow() then return false end
+			if kitChecks then
+				for _, check in pairs(kitChecks) do
+					if check() then return false end
+				end
+			end
 		end
-
-		if GUI.Enabled then
+		if Mouse and Mouse.Enabled then
+			local mousePressed = inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+			if not mousePressed then return false end
+		end
+		if GUI and GUI.Enabled then
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
-
-		local sword = Limit.Enabled and store.hand or store.tools.sword
+		local sword = (Limit and Limit.Enabled) and store.hand or store.tools.sword
 		if not sword or not sword.tool then return false end
-
 		local meta = bedwars.ItemMeta[sword.tool.Name]
-		if Limit.Enabled then
+		if not meta or not meta.sword then return false end
+		if Limit and Limit.Enabled then
 			if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
 		end
-
-		if LegitAura.Enabled then
-			if (tick() - bedwars.SwordController.lastSwing) > 0.2 then return false end
+		if LegitAura and LegitAura.Enabled then
+			local lastSwing = bedwars.SwordController.lastSwing or 0
+			if (tick() - lastSwing) > 0.5 then return false end
+			if lastSwing == lastFiredSwing then return false end
 		end
-
 		return sword, meta
 	end
 
@@ -2185,6 +2195,18 @@ run(function()
 								if delta.Magnitude > AttackRange.Value then continue end
 								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < math.max(ChargeTime.Value, 0.02) then continue end
 
+								if AirHit and AirHit.Enabled then
+                                    local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
+                                    if humanoid then
+                                        local state = humanoid:GetState()
+                                        if state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Physics then
+                                            if math.random(1, 100) > (AirChance and AirChance.Value or 100) then
+                                                continue
+                                            end
+                                        end
+                                    end
+                                end
+
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
@@ -2239,28 +2261,36 @@ run(function()
 					task.wait(1 / UpdateRate.Value)
 				until not Killaura.Enabled
 			else
-				store.KillauraTarget = nil
-				for _, v in Boxes do
-					v.Adornee = nil
-				end
-				for _, v in Particles do
-					v.Parent = nil
-				end
-				if inputService.TouchEnabled then
-					pcall(function()
-						lplr.PlayerGui.MobileUI['2'].Visible = true
-					end)
-				end
+                store.KillauraTarget = nil
+                Attacking = false
+
+                pcall(function() -- i think resetting all cooldowns? idk this skid called stranger is buns
+                    if bedwars.SwordController then
+                        bedwars.SwordController.lastAttack = 0
+                        bedwars.SwordController.lastSwing = 0
+                        if bedwars.SwordController.lastChargedAttackTimeMap then
+                            for weapname in next, bedwars.SwordController.lastChargedAttackTimeMap do
+                                bedwars.SwordController.lastChargedAttackTimeMap[weapname] = 0
+                            end
+                        end
+                    end
+                end)
 				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
-				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
-				Attacking = false
-				if armC0 then
-					AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(AnimationTween.Enabled and 0.001 or 0.3, Enum.EasingStyle.Exponential), {
-						C0 = armC0
-					})
-					AnimTween:Play()
-				end
-			end
+				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit) --removed in strangers code
+                if armC0 then
+                    pcall(function()
+                        AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {C0 = armC0})
+                        AnimTween:Play()
+                    end)
+                end
+
+                for _, v in Boxes do v.Adornee = nil end
+                for _, v in Particles do v.Parent = nil end
+
+                if inputService.TouchEnabled then
+                    pcall(function() lplr.PlayerGui.MobileUI['2'].Visible = true end)
+                end
+            end
 		end,
 		Tooltip = 'Attack players around you\nwithout aiming at them.'
 	})
@@ -2298,6 +2328,13 @@ run(function()
 		Max = 0.5,
 		Default = 0.42,
 		Decimal = 100
+    }) 
+	AirChance = Killaura:CreateSlider({
+        Name = 'Air Hit Chance',
+        Min = 0,
+        Max = 100,
+        Default = 100,
+        Suffix = '%'
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
@@ -2507,6 +2544,37 @@ run(function()
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})
+	task.spawn(function()
+		local wasAvailable = true
+		while task.wait(0.05) do
+			if bedwars.AbilityController then
+				local canUse = pcall(function()
+					return bedwars.AbilityController:canUseAbility('rebellion_shield')
+				end)
+				local nowAvailable = bedwars.AbilityController:canUseAbility('rebellion_shield')
+				if wasAvailable and not nowAvailable then
+					store.silasAbilityTime = tick()
+				end
+				wasAvailable = nowAvailable
+			end
+		end
+	end)
+	local kitChecks = {
+        ['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
+        ['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end,
+    }
+    AttackCheck = Killaura:CreateToggle({
+        Name = 'Attack Check',
+        Tooltip = 'Defers when kit ability is detected or when asleep',
+        Function = function(callback)
+        end,
+        Default = false
+    })
+     AirHit = Killaura:CreateToggle({
+        Name = 'Air Hits',
+        Default = true,
+        Tooltip = 'Hit when target is in non-grounded states (Freefall, Jumping, Physics)'
+    })
 end)
 	
 run(function()
