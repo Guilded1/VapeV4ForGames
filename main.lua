@@ -27,7 +27,7 @@ local cloneref = cloneref or function(obj)
 	return obj
 end
 local playersService = cloneref(game:GetService('Players'))
-getgenv().githubservice = "https://raw.githubusercontent.com/Guilded1/wl/refs/heads/main/test.json?x="..math.random(0,5000)
+shared.githubservice = "https://raw.githubusercontent.com/Guilded1/wl/refs/heads/main/test.json?x="..math.random(0,5000)
 
 local function downloadFile(path, func)
 	if not isfile(path) then
