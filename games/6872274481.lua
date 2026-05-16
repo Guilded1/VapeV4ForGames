@@ -7457,7 +7457,7 @@ run(function()
 end)
 	
 run(function()
-	task.spawn(function() if not predictionmags then lplr:Kick(math.random(1, 9e9)) end)
+	task.spawn(function() if not predictionmags then lplr:Kick(math.random(1, 6700)) end)
 	local DamageIndicator
 	local FontOption
 	local Color
