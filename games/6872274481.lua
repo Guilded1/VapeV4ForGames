@@ -2039,7 +2039,7 @@ run(function()
 	local LegitAura = {}
     local kitChecks = {
 		['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
-		['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end,
+		['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end
 	}
     local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
@@ -2051,7 +2051,7 @@ run(function()
 
 	local function getAttackData()
 		if AttackCheck and AttackCheck.Enabled then
-			local stunTime = lplr.Character and lplr.Character:GetAttribute('StunnedUntilTime')
+			local stunTime = lplr.Character:GetAttribute('StunnedUntilTime')
 			if stunTime and stunTime >= workspace:GetServerTimeNow() then return false end
 			if kitChecks then
 				for _, check in pairs(kitChecks) do
@@ -2271,7 +2271,7 @@ run(function()
                     end
                 end)
 				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
-				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit) -- removed in strangers pull request, restoring original upvalue; seen in 2108 and 2109
+				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
                 if armC0 then
                     pcall(function()
                         AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {C0 = armC0})
