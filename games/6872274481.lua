@@ -2037,8 +2037,8 @@ run(function()
 	local AnimationTween
 	local Limit
 	local LegitAura = {}
-        local kitChecks
-        local FROZEN_THRESHOLD = 10
+    local kitChecks
+    local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
@@ -2195,7 +2195,7 @@ run(function()
 								if delta.Magnitude > AttackRange.Value then continue end
 								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < math.max(ChargeTime.Value, 0.02) then continue end
 
-if AirHit and AirHit.Enabled then
+								if AirHit and AirHit.Enabled then
                                     local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
                                     if humanoid then
                                         local state = humanoid:GetState()
@@ -2260,22 +2260,23 @@ if AirHit and AirHit.Enabled then
 					--#attacked > 0 and #attacked * 0.02 or
 					task.wait(1 / UpdateRate.Value)
 				until not Killaura.Enabled
-			            else
+			else
                 store.KillauraTarget = nil
                 Attacking = false
 
-                pcall(function()
+                pcall(function() -- i think resetting all cooldowns? idk this skid called stranger is buns
                     if bedwars.SwordController then
                         bedwars.SwordController.lastAttack = 0
                         bedwars.SwordController.lastSwing = 0
                         if bedwars.SwordController.lastChargedAttackTimeMap then
-                            for weaponName in pairs(bedwars.SwordController.lastChargedAttackTimeMap) do
-                                bedwars.SwordController.lastChargedAttackTimeMap[weaponName] = 0
+                            for weapname in next, bedwars.SwordController.lastChargedAttackTimeMap do
+                                bedwars.SwordController.lastChargedAttackTimeMap[weapname] = 0
                             end
                         end
                     end
                 end)
-
+				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
+				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit) --removed in strangers code
                 if armC0 then
                     pcall(function()
                         AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {C0 = armC0})
@@ -2327,14 +2328,13 @@ if AirHit and AirHit.Enabled then
 		Max = 0.5,
 		Default = 0.42,
 		Decimal = 100
-        }) 
-        AirChance = Killaura:CreateSlider({
+    }) 
+	AirChance = Killaura:CreateSlider({
         Name = 'Air Hit Chance',
         Min = 0,
         Max = 100,
         Default = 100,
         Suffix = '%'
-
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
@@ -2546,8 +2546,7 @@ if AirHit and AirHit.Enabled then
 	})
 	task.spawn(function()
 		local wasAvailable = true
-		while true do
-			task.wait(0.05)
+		while task.wait(0.05) do
 			if bedwars.AbilityController then
 				local canUse = pcall(function()
 					return bedwars.AbilityController:canUseAbility('rebellion_shield')
@@ -2566,7 +2565,7 @@ if AirHit and AirHit.Enabled then
     }
     AttackCheck = Killaura:CreateToggle({
         Name = 'Attack Check',
-        Tooltip = 'Stops Killaura when a kit ability is detected (Sophia, etc) or when asleep',
+        Tooltip = 'Defers when kit ability is detected or when asleep',
         Function = function(callback)
         end,
         Default = false
@@ -2574,7 +2573,7 @@ if AirHit and AirHit.Enabled then
      AirHit = Killaura:CreateToggle({
         Name = 'Air Hits',
         Default = true,
-        Tooltip = 'Control hit chance when target is airborne'
+        Tooltip = 'Hit when target is in non-grounded states (Freefall, Jumping, Physics)'
     })
 end)
 	
