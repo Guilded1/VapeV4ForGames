@@ -2037,7 +2037,10 @@ run(function()
 	local AnimationTween
 	local Limit
 	local LegitAura = {}
-    local kitChecks
+    local kitChecks = {
+		['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
+		['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end,
+	}
     local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
@@ -2049,7 +2052,7 @@ run(function()
 	local function getAttackData()
 		if AttackCheck and AttackCheck.Enabled then
 			local stunTime = lplr.Character and lplr.Character:GetAttribute('StunnedUntilTime')
-			if stunTime and stunTime > workspace:GetServerTimeNow() then return false end
+			if stunTime and stunTime >= workspace:GetServerTimeNow() then return false end
 			if kitChecks then
 				for _, check in pairs(kitChecks) do
 					if check() then return false end
@@ -2087,7 +2090,6 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = Limit.Enabled
 					end)
 				end
-
 				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
 					local fake = {
 						Controllers = {
@@ -2105,7 +2107,6 @@ run(function()
 					}
 					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, fake)
 					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
-
 					task.spawn(function()
 						local started = false
 						repeat
@@ -2263,20 +2264,14 @@ run(function()
 			else
                 store.KillauraTarget = nil
                 Attacking = false
-
-                pcall(function() -- i think resetting all cooldowns? idk this skid called stranger is buns
+                pcall(function()
                     if bedwars.SwordController then
-                        bedwars.SwordController.lastAttack = 0
-                        bedwars.SwordController.lastSwing = 0
-                        if bedwars.SwordController.lastChargedAttackTimeMap then
-                            for weapname in next, bedwars.SwordController.lastChargedAttackTimeMap do
-                                bedwars.SwordController.lastChargedAttackTimeMap[weapname] = 0
-                            end
-                        end
+                        bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
+                        bedwars.SwordController.lastSwing = os.clock()
                     end
                 end)
 				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
-				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit) --removed in strangers code
+				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit) -- removed in strangers pull request, restoring original upvalue; seen in 2108 and 2109
                 if armC0 then
                     pcall(function()
                         AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {C0 = armC0})
@@ -2544,30 +2539,10 @@ run(function()
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})
-	task.spawn(function()
-		local wasAvailable = true
-		while task.wait(0.05) do
-			if bedwars.AbilityController then
-				local canUse = pcall(function()
-					return bedwars.AbilityController:canUseAbility('rebellion_shield')
-				end)
-				local nowAvailable = bedwars.AbilityController:canUseAbility('rebellion_shield')
-				if wasAvailable and not nowAvailable then
-					store.silasAbilityTime = tick()
-				end
-				wasAvailable = nowAvailable
-			end
-		end
-	end)
-	local kitChecks = {
-        ['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
-        ['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end,
-    }
     AttackCheck = Killaura:CreateToggle({
         Name = 'Attack Check',
         Tooltip = 'Defers when kit ability is detected or when asleep',
-        Function = function(callback)
-        end,
+        Function = function(val) end,
         Default = false
     })
      AirHit = Killaura:CreateToggle({
