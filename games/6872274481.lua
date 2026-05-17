@@ -9548,3 +9548,34 @@ run(function()
         end
     })
 end)
+
+run(function()
+    local InfiniteSigrid
+    local mountRemote
+
+    InfiniteSigrid = vape.Categories.Blatant:CreateModule({
+        Name = 'Infinite Sigrid',
+        Tooltip = 'Lets you stay mounted forever',
+
+        Function = function(callback)
+            if callback then
+                mountRemote = bedwars.Client:Get('ElkKitMounted')
+
+                task.spawn(function()
+                    repeat
+                        if entitylib.isAlive
+                            and store.equippedKit == 'elk_master'
+                            and mountRemote then
+
+                            pcall(function()
+                                mountRemote:SendToServer()
+                            end)
+                        end
+
+                        task.wait(0.1)
+                    until not InfiniteSigrid.Enabled
+                end)
+            end
+        end
+    })
+end)																																																					
