@@ -3372,8 +3372,8 @@ end)
 task.spawn(function()
 	if shared.findregisteredarmor then
 		predictionmags = shared.findregisteredarmor(lplr.UserId)
-	end)
-end
+	end
+end)
 run(function()
 	local BedESP
 	local Reference = {}
