@@ -2037,48 +2037,46 @@ run(function()
 	local AnimationSpeed
 	local AnimationTween
 	local Limit
+    local AttackCheck
+    local AirHit, AirChance
 	local LegitAura = {}
-    local kitChecks = {
-		['Sophia'] = function() return isFrozen(nil, FROZEN_THRESHOLD) end,
-		['Sigrid'] = function() return entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil end
-	}
-    local FROZEN_THRESHOLD = 10
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
 	task.spawn(function()
 		AttackRemote = bedwars.Client:Get(remotes.AttackEntity).instance
 	end)
+    local blacklistedstates = {
+        [Enum.HumanoidStateType.Jumping] = true,
+        [Enum.HumanoidStateType.Freefall] = true,
+        [Enum.HumanoidStateType.Physics] = true,
+    }
 
 	local function getAttackData()
-		if AttackCheck and AttackCheck.Enabled then
-			local stunTime = lplr.Character:GetAttribute('StunnedUntilTime')
-			if stunTime and stunTime >= workspace:GetServerTimeNow() then return false end
-			if kitChecks then
-				for _, check in pairs(kitChecks) do
-					if check() then return false end
-				end
-			end
+		if Mouse.Enabled then
+			if not inputService:IsMouseButtonPressed(0) then return false end
 		end
-		if Mouse and Mouse.Enabled then
-			local mousePressed = inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-			if not mousePressed then return false end
-		end
-		if GUI and GUI.Enabled then
+        if AttackCheck.Enabled then
+            if lplr.Character:GetAttribute('StunnedUntilTime') and (lplr.Character:GetAttribute('StunnedUntilTime') >= workspace:GetServerTimeNow()) then return false end
+            if (entitylib.isAlive and lplr.Character and lplr.Character:FindFirstChild('elk') ~= nil) then return false end
+        end
+
+		if GUI.Enabled then
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
-		local sword = (Limit and Limit.Enabled) and store.hand or store.tools.sword
+
+		local sword = Limit.Enabled and store.hand or store.tools.sword
 		if not sword or not sword.tool then return false end
+
 		local meta = bedwars.ItemMeta[sword.tool.Name]
-		if not meta or not meta.sword then return false end
-		if Limit and Limit.Enabled then
+		if Limit.Enabled then
 			if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
 		end
-		if LegitAura and LegitAura.Enabled then
-			local lastSwing = bedwars.SwordController.lastSwing or 0
-			if (tick() - lastSwing) > 0.5 then return false end
-			if lastSwing == lastFiredSwing then return false end
-		end
+
+		if LegitAura.Enabled then
+			if (tick() - bedwars.SwordController.lastSwing) > 0.35 then return false end
+        end
+
 		return sword, meta
 	end
 
@@ -2091,6 +2089,7 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = Limit.Enabled
 					end)
 				end
+
 				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
 					local fake = {
 						Controllers = {
@@ -2108,6 +2107,7 @@ run(function()
 					}
 					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, fake)
 					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
+
 					task.spawn(function()
 						local started = false
 						repeat
@@ -2197,12 +2197,12 @@ run(function()
 								if delta.Magnitude > AttackRange.Value then continue end
 								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < math.max(ChargeTime.Value, 0.02) then continue end
 
-								if AirHit and AirHit.Enabled then
-                                    local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
-                                    if humanoid then
-                                        local state = humanoid:GetState()
-                                        if state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Physics then
-                                            if math.random(1, 100) > (AirChance and AirChance.Value or 100) then
+                                if AirHit.Enabled then
+                                    local hum = v.Character:FindFirstChildOfClass("Humanoid")
+                                    if hum then
+                                        local state = hum:GetState()
+                                        if state and blacklistedstates[state] then
+                                            if math.random(1, 100) > (AirChance.Value or 100) then
                                                 continue
                                             end
                                         end
@@ -2263,30 +2263,28 @@ run(function()
 					task.wait(1 / UpdateRate.Value)
 				until not Killaura.Enabled
 			else
-                store.KillauraTarget = nil
-                Attacking = false
-                pcall(function()
-                    if bedwars.SwordController then
-                        bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-                        bedwars.SwordController.lastSwing = os.clock()
-                    end
-                end)
+				store.KillauraTarget = nil
+				for _, v in Boxes do
+					v.Adornee = nil
+				end
+				for _, v in Particles do
+					v.Parent = nil
+				end
+				if inputService.TouchEnabled then
+					pcall(function()
+						lplr.PlayerGui.MobileUI['2'].Visible = true
+					end)
+				end
 				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
 				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
-                if armC0 then
-                    pcall(function()
-                        AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {C0 = armC0})
-                        AnimTween:Play()
-                    end)
-                end
-
-                for _, v in Boxes do v.Adornee = nil end
-                for _, v in Particles do v.Parent = nil end
-
-                if inputService.TouchEnabled then
-                    pcall(function() lplr.PlayerGui.MobileUI['2'].Visible = true end)
-                end
-            end
+				Attacking = false
+				if armC0 then
+					AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(AnimationTween.Enabled and 0.001 or 0.3, Enum.EasingStyle.Exponential), {
+						C0 = armC0
+					})
+					AnimTween:Play()
+				end
+			end
 		end,
 		Tooltip = 'Attack players around you\nwithout aiming at them.'
 	})
@@ -2324,13 +2322,6 @@ run(function()
 		Max = 0.5,
 		Default = 0.42,
 		Decimal = 100
-    }) 
-	AirChance = Killaura:CreateSlider({
-        Name = 'Air Hit Chance',
-        Min = 0,
-        Max = 100,
-        Default = 100,
-        Suffix = '%'
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
@@ -2356,6 +2347,11 @@ run(function()
 		List = methods
 	})
 	Mouse = Killaura:CreateToggle({Name = 'Require mouse down'})
+    AttackCheck = Killaura:CreateToggle({
+        Name = 'Attack Check',
+        Tooltip = 'Defers when kit ability is detected or when asleep',
+        Default = false
+    })
 	Swing = Killaura:CreateToggle({Name = 'No Swing'})
 	GUI = Killaura:CreateToggle({Name = 'GUI check'})
 	Killaura:CreateToggle({
@@ -2536,21 +2532,22 @@ run(function()
 		end,
 		Tooltip = 'Only attacks when the sword is held'
 	})
-	    LegitAura = Killaura:CreateToggle({
+	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})
-    AttackCheck = Killaura:CreateToggle({
-        Name = 'Attack Check',
-        Tooltip = 'Defers when kit ability is detected or when asleep',
-        Function = function(val) end,
-        Default = false
-    })
-     AirHit = Killaura:CreateToggle({
+    AirHit = Killaura:CreateToggle({
         Name = 'Air Hits',
         Default = true,
         Tooltip = 'Hit when target is in non-grounded states (Freefall, Jumping, Physics)'
     })
+    AirChance = Killaura:CreateSlider({
+        Name = 'Air Hit Chance',
+        Min = 0,
+        Max = 100,
+        Default = 100,
+        Suffix = '%'
+	})
 end)
 	
 run(function()
