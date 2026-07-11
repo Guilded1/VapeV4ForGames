@@ -649,7 +649,11 @@ run(function()
 	local KnitInit, Knit
 	repeat
 		KnitInit, Knit = pcall(function()
-			return debug.getupvalue(require(lplr.PlayerScripts.TS.knit).setup, 9)
+			for i,v in next, debug.getupvalues(require(lplr.PlayerScripts.TS.knit).setup) do
+			    if (type(v) == "table") and (type(v.CreateController) == "function" and type(v.Controllers) == "table") then
+			       	return v
+			    end
+			end
 		end)
 		if KnitInit then break end
 		task.wait()
