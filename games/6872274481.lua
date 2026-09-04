@@ -9549,3 +9549,45 @@ run(function()
         end
     })
 end)
+
+
+local function fetchBedfromPos(bedPos)
+    local offsets = {
+        Vector3.new(0, 0, 1),
+        Vector3.new(0, 0, -1),
+        Vector3.new(1, 0, 0),
+        Vector3.new(-1, 0, 0),
+    }
+    for _, v in next, offsets do
+        local pos = bedPos + v
+        local suc, res = pcall(function()
+            return bedwars.BlockController:getStore():getBlockAt(pos)
+        end)
+        if suc and res and res.Name == "bed" then
+            return pos
+        end
+    end
+    return nil
+end
+run(function()
+    local sillybed
+    sillybed = vape.Categories.Minigames:CreateModule({
+        Name = 'bed godmode',
+        Function = function(callback)
+            if callback then
+                task.spawn(function()
+                    for _, bed in collectionService:GetTagged('bed') do
+                        if bed:GetAttribute("TeamId") == lplr:GetAttribute('Team') then
+                            local normalpos = (bed:GetAttribute("BlockPosition")) * 3
+                            bedwars.Client:Get("RequestPlaceSpiritGardenerFlower"):CallServer(normalpos, "tearbloom_seed")
+                            local tung = fetchBedfromPos(bed:GetAttribute("BlockPosition"))
+                            bedwars.Client:Get("RequestPlaceSpiritGardenerFlower"):CallServer(tung * 3, "tearbloom_seed")
+                        end
+                    end
+                end)
+                sillybed:Toggle()
+            end
+        end,
+        Tooltip = 'godmode with bed requires grove kit'
+    })
+end)
